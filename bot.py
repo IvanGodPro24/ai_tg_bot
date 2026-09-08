@@ -17,6 +17,8 @@ model = genai.GenerativeModel('gemini-flash-latest')
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
 
+user_chats = {}
+
 menu_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Студент"), KeyboardButton(text="IT-технології")],
@@ -48,7 +50,7 @@ async def handle_tech(message: types.Message):
 
 @dp.message(F.text == "Контакти")
 async def handle_contacts(message: types.Message):
-    text = "Контакти:\nEmail: ivan.nepotachev@example.com\nTelegram: @your_username"
+    text = "Контакти:\nEmail: ivan.nepotachev@example.com\nTelegram: @AI_user"
     await message.answer(text)
 
 @dp.message(F.text == "Prompt AI")
@@ -57,13 +59,29 @@ async def handle_prompt_ai(message: types.Message):
 
 @dp.message()
 async def handle_ai_request(message: types.Message):
+    user_id = message.from_user.id
+    
+    if user_id not in user_chats:
+        user_chats[user_id] = model.start_chat(history=[])
+        
+    chat_session = user_chats[user_id]
+    
     try:
         await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-        response = await model.generate_content_async(message.text)
+        
+        response = await chat_session.send_message_async(message.text)
         await message.answer(response.text)
+        
     except Exception as e:
         print(f"Error: {e}")
         await message.answer("Помилка при зверненні до AI. Спробуйте пізніше.")
+
+@dp.message(Command("clear"))
+async def cmd_clear(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_chats:
+        del user_chats[user_id]
+    await message.answer("Історію розмови очищено. Почнемо з чистого аркуша!")
 
 async def main():
     app = web.Application()
