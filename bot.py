@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import google.generativeai as genai
+from aiohttp import web
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -65,7 +66,17 @@ async def handle_ai_request(message: types.Message):
         await message.answer("Помилка при зверненні до AI. Спробуйте пізніше.")
 
 async def main():
-    print("Бот запущений...")
+    app = web.Application()
+    app.router.add_get('/', lambda request: web.Response(text="Bot is running!"))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
+    print(f"Веб-сервер запущено на порту {port}. Запуск бота...")
+    
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
