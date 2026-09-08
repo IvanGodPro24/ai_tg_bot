@@ -57,6 +57,13 @@ async def handle_contacts(message: types.Message):
 async def handle_prompt_ai(message: types.Message):
     await message.answer("Напишіть ваше запитання до штучного інтелекту:")
 
+@dp.message(Command("clear"))
+async def cmd_clear(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_chats:
+        del user_chats[user_id]
+    await message.answer("Історію розмови очищено. Почнемо з чистого аркуша!")
+
 @dp.message()
 async def handle_ai_request(message: types.Message):
     user_id = message.from_user.id
@@ -74,14 +81,7 @@ async def handle_ai_request(message: types.Message):
         
     except Exception as e:
         print(f"Error: {e}")
-        await message.answer("Помилка при зверненні до AI. Спробуйте пізніше.")
-
-@dp.message(Command("clear"))
-async def cmd_clear(message: types.Message):
-    user_id = message.from_user.id
-    if user_id in user_chats:
-        del user_chats[user_id]
-    await message.answer("Історію розмови очищено. Почнемо з чистого аркуша!")
+        await message.answer(f"Помилка AI: {str(e)[:100]}\nСпробуйте /clear")
 
 async def main():
     app = web.Application()
@@ -95,6 +95,7 @@ async def main():
 
     print(f"Веб-сервер запущено на порту {port}. Запуск бота...")
     
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
