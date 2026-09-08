@@ -81,7 +81,7 @@ async def handle_ai_request(message: types.Message):
         
     except Exception as e:
         print(f"Error: {e}")
-        await message.answer(f"Помилка AI: {str(e)[:100]}\nСпробуйте /clear")
+        await message.answer(f"Помилка AI: {str(e)[:500]}\nСпробуйте /clear")
 
 async def main():
     app = web.Application()
